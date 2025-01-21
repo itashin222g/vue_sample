@@ -1,6 +1,33 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 //import TheWelcome from '../components/TheWelcome.vue'
 const today = new Date().toISOString().slice(0, 10)
+import { ref, onMounted } from 'vue'
+import { useLoadingStore } from '@/stores/loadingStore'
+const loadingStore = useLoadingStore()
+
+const imageFiles = ref<File[]>([])
+const imageUrls = ref<string[]>([])
+
+function handleFiles(event: Event) {
+  const files = (event.target as HTMLInputElement).files
+  if (files) {
+    imageFiles.value = Array.from(files)
+    updateImageUrls()
+  }
+}
+
+function updateImageUrls() {
+  imageUrls.value = imageFiles.value.map((file) => {
+    return URL.createObjectURL(file)
+  })
+}
+
+onMounted(async () => {
+  loadingStore.showLoading()
+  await fetchData()
+  loadingStore.hideLoading()
+})
+async function fetchData() {}
 </script>
 
 <template>
@@ -88,9 +115,15 @@ const today = new Date().toISOString().slice(0, 10)
       ></label>
       <input
         type="file"
+        @change="handleFiles"
         name="file-upload"
         class="mt-1 block w-full px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-md shadow-sm"
       />
+      <div class="grid grid-cols-3 gap-4">
+        <div v-for="(url, index) in imageUrls" :key="index">
+          <img :src="url" alt="Uploaded Image" class="w-full object-cover h-32" />
+        </div>
+      </div>
     </div>
 
     <p class="mb-4">

@@ -252,6 +252,7 @@ onMounted(async () => {
         </label>
         <input
           type="file"
+          accept="image/png, image/jpeg, image/gif"
           id="file-upload"
           @change="handleFiles"
           name="file-upload"
@@ -299,14 +300,14 @@ onMounted(async () => {
       <h2 class="text-lg font-semibold mb-1">確認画面</h2>
       <p class="mb-4">以下の内容で送信します。</p>
 
-      <p><strong>お名前（姓）:</strong> {{ formData.nameLast }}</p>
-      <p><strong>お名前（名）:</strong> {{ formData.nameFirst }}</p>
-      <p><strong>メールアドレス:</strong> {{ formData.email }}</p>
-      <p>
+      <p class="mb-1"><strong>お名前（姓）:</strong> {{ formData.nameLast }}</p>
+      <p class="mb-1"><strong>お名前（名）:</strong> {{ formData.nameFirst }}</p>
+      <p class="mb-1"><strong>メールアドレス:</strong> {{ formData.email }}</p>
+      <p class="mb-1">
         <strong>お問い合わせ内容:</strong>
         {{ formData.inquiryType == 'product' ? '製品について' : 'その他' }}
       </p>
-      <p>
+      <p class="mb-1">
         <strong>希望返信日:</strong>
         {{
           formData.replyDate == ''
@@ -318,11 +319,11 @@ onMounted(async () => {
               })
         }}
       </p>
-      <p>
+      <p class="mb-1">
         <strong>詳細:</strong> {{ formData.details
         }}<span v-if="formData.details.length <= 0">なし</span>
       </p>
-      <p><strong>画像:</strong><span v-if="imageUrls.length <= 0">なし</span></p>
+      <p class="mb-1"><strong>画像:</strong><span v-if="imageUrls.length <= 0">なし</span></p>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
         <div v-for="(url, index) in imageUrls" :key="index" class="relative group border p-2">
           <img :src="url" alt="Uploaded Image" class="w-full object-contain h-32 rounded-md" />

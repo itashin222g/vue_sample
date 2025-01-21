@@ -101,6 +101,13 @@ function confirmSubmit() {
 function editForm() {
   formStage.value = 'input' // 入力画面に戻る
 }
+
+const options = {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+}
+
 onMounted(async () => {
   loadingStore.showLoading()
   await fetchData()
@@ -266,9 +273,24 @@ async function fetchData() {}
       <p><strong>お名前（姓）:</strong> {{ formData.nameLast }}</p>
       <p><strong>お名前（名）:</strong> {{ formData.nameFirst }}</p>
       <p><strong>メールアドレス:</strong> {{ formData.email }}</p>
-      <p><strong>お問い合わせ内容:</strong> {{ formData.inquiryType }}</p>
-      <p><strong>希望返信日:</strong> {{ formData.replyDate }}</p>
-      <p><strong>詳細:</strong> {{ formData.details }}</p>
+      <p>
+        <strong>お問い合わせ内容:</strong>
+        {{ formData.inquiryType == 'product' ? '製品について' : 'その他' }}
+      </p>
+      <p>
+        <strong>希望返信日:</strong>
+        {{
+          new Date(formData.replyDate).toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        }}
+      </p>
+      <p>
+        <strong>詳細:</strong> {{ formData.details
+        }}<span v-if="formData.details.length <= 0">なし</span>
+      </p>
       <p><strong>画像:</strong><span v-if="imageUrls.length <= 0">なし</span></p>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
         <div v-for="(url, index) in imageUrls" :key="index" class="relative group border p-2">

@@ -51,7 +51,10 @@ function removeImage(index: number) {
   imageFiles.value.splice(index, 1) // ファイルリストから削除
   imageUrls.value.splice(index, 1) // URLリストから削除
 }
-
+function isValidDateFormat(dateString: string) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/
+  return regex.test(dateString)
+}
 function validateForm() {
   errors.value = {} // 初期化
 
@@ -75,6 +78,10 @@ function validateForm() {
   // お問い合わせ内容のチェック
   if (!formData.value.inquiryType) {
     errors.value.inquiryType = 'お問い合わせ内容を選択してください。'
+  }
+  // 日付型のチェック
+  if (formData.value.replyDate && !isValidDateFormat(formData.value.replyDate)) {
+    errors.value.replyDate = '日付が正しくありません。'
   }
 
   // 詳細のチェック
@@ -224,6 +231,7 @@ onMounted(async () => {
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           :min="today"
         />
+        <p v-if="errors.replyDate" class="text-red-500 text-sm mt-1">{{ errors.replyDate }}</p>
       </div>
       <div class="mb-4">
         <label for="inquiry" class="block text-sm font-medium text-gray-700"

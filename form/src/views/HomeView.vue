@@ -66,7 +66,7 @@ function validateForm() {
   // メールアドレスのチェック
   if (!formData.value.email.trim()) {
     errors.value.email = 'メールアドレスを入力してください。'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
     errors.value.email = '正しいメールアドレスを入力してください。'
   }
 

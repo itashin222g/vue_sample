@@ -6,7 +6,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'custom-bg-color': '#f5f0e6', // カスタムカラー
+        'custom-bg-color': '#f5f0e6',
+        'main-color': '#14c3d7',
       },
     },
   },

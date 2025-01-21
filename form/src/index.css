@@ -19,3 +19,7 @@
     }
   }
 }
+body {
+  min-width: 360px;
+  overflow-x: auto;
+}

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 //import TheWelcome from '../components/TheWelcome.vue'
+import { XMarkIcon } from '@heroicons/vue/24/solid' // Heroicons の X アイコンをインポート
+
 const today = new Date().toISOString().slice(0, 10)
 import { ref, onMounted } from 'vue'
 import { useLoadingStore } from '@/stores/loadingStore'
@@ -9,10 +11,18 @@ const imageFiles = ref<File[]>([])
 const imageUrls = ref<string[]>([])
 
 function handleFiles(event: Event) {
-  const files = (event.target as HTMLInputElement).files
+  const input = event.target as HTMLInputElement
+  const files = input.files
+
   if (files) {
-    imageFiles.value = Array.from(files)
+    console.log('Selected files:', files) // デバッグ用ログ
+    imageFiles.value = imageFiles.value.concat(Array.from(files)) // 既存のリストに追加
     updateImageUrls()
+
+    // 入力値をリセットして同じファイルを再選択可能にする
+    input.value = ''
+  } else {
+    console.error('No files selected') // デバッグ用ログ
   }
 }
 
@@ -20,6 +30,11 @@ function updateImageUrls() {
   imageUrls.value = imageFiles.value.map((file) => {
     return URL.createObjectURL(file)
   })
+}
+
+function removeImage(index: number) {
+  imageFiles.value.splice(index, 1) // ファイルリストから削除
+  imageUrls.value.splice(index, 1) // URLリストから削除
 }
 
 onMounted(async () => {
@@ -31,7 +46,10 @@ async function fetchData() {}
 </script>
 
 <template>
-  <p class="mb-2 text-lg font-semibold">お問い合わせフォーム</p>
+  <div class="container mx-auto mb-4">
+    <p class="mb-2 text-lg font-semibold">お問い合わせフォーム</p>
+  </div>
+
   <div class="container mx-auto px-4 bg-white rounded-md p-4 mb-4">
     <div class="flex">
       <div class="flex-1 pr-4 mb-4">
@@ -110,31 +128,59 @@ async function fetchData() {}
       ></textarea>
     </div>
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700"
-        >画像（任意）<span class="label-optional"></span
+      <label for="inquiry" class="block text-sm font-medium text-gray-700 mb-2"
+        >画像<span class="label-optional ml-2"></span
       ></label>
+      <label
+        for="file-upload"
+        class="inline-block mb-2 bg-main-color text-white px-4 py-2 rounded text-sm cursor-pointer transition-colors hover:bg-sky-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        画像選択
+      </label>
       <input
         type="file"
+        id="file-upload"
         @change="handleFiles"
         name="file-upload"
-        class="mt-1 block w-full px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-md shadow-sm"
+        class="hidden"
+        multiple
       />
-      <div class="grid grid-cols-3 gap-4">
-        <div v-for="(url, index) in imageUrls" :key="index">
-          <img :src="url" alt="Uploaded Image" class="w-full object-cover h-32" />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+        <div v-for="(url, index) in imageUrls" :key="index" class="relative group border p-2">
+          <img :src="url" alt="Uploaded Image" class="w-full object-contain h-32 rounded-md" />
+          <button
+            class="absolute top-0 right-0 bg-red-500 transition-colors hover:bg-red-400 text-white rounded-full w-6 h-6 flex items-center justify-center"
+            @click="removeImage(index)"
+          >
+            <XMarkIcon class="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
-
-    <p class="mb-4">
-      画像アップロード 個人情報の取扱いについて
-      <a href="#">こちら</a>をご確認の上、同意をお願いいたします。
-    </p>
+    <p class="font-semibold">個人情報の取扱いについて</p>
+    <p class="mb-4"><a href="#">こちら</a>をご確認の上、同意をお願いいたします。</p>
 
     <label class="inline-flex items-center">
-      <input type="checkbox" class="form-checkbox h-5 w-5 text-indigo-600" name="agree" />
+      <input
+        type="checkbox"
+        class="form-checkbox h-5 w-5 text-main-color border-gray-300 focus:ring-main-color rounded"
+        name="agree"
+      />
       <span class="ml-2 text-sm text-gray-700">個人情報の取扱いについて同意する</span>
     </label>
   </div>
-  <button class="bg-blue-700 text-white px-4 py-2 rounded">送信する</button>
+  <div class="container mx-auto mb-4">
+    <button
+      class="bg-main-color rounded-full text-white px-4 py-2 rounded transition-colors hover:bg-sky-300"
+    >
+      送信する
+    </button>
+  </div>
+  <div class="container mx-auto px-4 bg-white rounded-md p-4 mb-4">
+    <p class="">
+      送信完了しました。<br />
+      ありがとうございます。
+    </p>
+  </div>
 </template>

@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-//import TheWelcome from '../components/TheWelcome.vue'
 import { XMarkIcon, PhotoIcon } from '@heroicons/vue/24/solid' // Heroiconsのアイコンをインポート
 
-const today = new Date().toISOString().slice(0, 10)
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import { useLoadingStore } from '@/stores/loadingStore'
+import Loading from '@/components/Loading.vue'
+
+const today = new Date().toISOString().slice(0, 10)
 const loadingStore = useLoadingStore()
 
 const imageFiles = ref<File[]>([])
@@ -94,9 +96,38 @@ function handleSubmit() {
     alert('入力内容を確認してください。') // バリデーション失敗時
   }
 }
-function confirmSubmit() {
-  // ここで実際の送信処理を行う（例: API呼び出し）
-  formStage.value = 'submitted' // 送信完了画面に遷移
+async function confirmSubmit() {
+  loadingStore.showLoading()
+  const data = new FormData()
+  data.append('nameLast', formData.value.nameLast)
+  data.append('nameFirst', formData.value.nameFirst)
+  data.append('email', formData.value.email)
+  data.append('inquiryType', formData.value.inquiryType)
+  data.append('replyDate', formData.value.replyDate)
+  data.append('details', formData.value.details)
+  data.append('agree', formData.value.agree.toString())
+
+  imageFiles.value.forEach((file, index) => {
+    data.append(`image${index + 1}`, file)
+  })
+  try {
+    const response = await axios
+      .post('https://httpbin.org/post', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((response) => {
+        loadingStore.hideLoading()
+        console.log('データ送信に成功しました:', response.data)
+        formStage.value = 'submitted' // 送信完了画面に遷移
+      })
+      .catch((error) => {
+        console.error('データ送信に失敗しました:', error)
+      })
+  } catch (error) {
+    console.error('フォームの送信中にエラーが発生しました:', error)
+  }
 }
 function editForm() {
   formStage.value = 'input' // 入力画面に戻る
@@ -107,13 +138,11 @@ const options = {
   month: 'long',
   day: 'numeric',
 }
+loadingStore.showLoading()
 
 onMounted(async () => {
-  loadingStore.showLoading()
-  await fetchData()
   loadingStore.hideLoading()
 })
-async function fetchData() {}
 </script>
 
 <template>
@@ -259,7 +288,7 @@ async function fetchData() {}
     <div class="container mx-auto mb-4">
       <button
         @click.prevent="handleSubmit"
-        class="bg-main-color rounded-full text-white px-4 py-2 rounded transition-colors hover:bg-sky-300"
+        class="bg-main-color rounded-full text-white px-4 py-2 transition-colors hover:bg-sky-300"
       >
         送信する
       </button>
@@ -280,11 +309,13 @@ async function fetchData() {}
       <p>
         <strong>希望返信日:</strong>
         {{
-          new Date(formData.replyDate).toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })
+          formData.replyDate == ''
+            ? 'なし'
+            : new Date(formData.replyDate).toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
         }}
       </p>
       <p>
@@ -299,7 +330,7 @@ async function fetchData() {}
       </div>
     </div>
     <!-- ボタン群 -->
-    <div class="mt-4">
+    <div class="container mx-auto rounded-md">
       <button
         @click="editForm"
         class="bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
@@ -308,7 +339,7 @@ async function fetchData() {}
       </button>
       <button
         @click="confirmSubmit"
-        class="bg-green-500 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 ml-2"
+        class="bg-main-color text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 ml-2"
       >
         確定して送信
       </button>
@@ -321,7 +352,7 @@ async function fetchData() {}
       <p class="">
         送信完了しました。<br />
         ありがとうございます。<br />
-        〇営業日以内にメールアドレス宛に返信いたします。
+        10営業日以内にメールアドレス宛に返信いたします。
       </p>
     </div>
   </div>

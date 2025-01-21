@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-//import TheWelcome from '../components/TheWelcome.vue'
 import { XMarkIcon, PhotoIcon } from '@heroicons/vue/24/solid' // Heroiconsのアイコンをインポート
 
-const today = new Date().toISOString().slice(0, 10)
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import { useLoadingStore } from '@/stores/loadingStore'
+import Loading from '@/components/Loading.vue'
+
+const today = new Date().toISOString().slice(0, 10)
 const loadingStore = useLoadingStore()
 
 const imageFiles = ref<File[]>([])
@@ -49,7 +51,10 @@ function removeImage(index: number) {
   imageFiles.value.splice(index, 1) // ファイルリストから削除
   imageUrls.value.splice(index, 1) // URLリストから削除
 }
-
+function isValidDateFormat(dateString: string) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/
+  return regex.test(dateString)
+}
 function validateForm() {
   errors.value = {} // 初期化
 
@@ -66,13 +71,17 @@ function validateForm() {
   // メールアドレスのチェック
   if (!formData.value.email.trim()) {
     errors.value.email = 'メールアドレスを入力してください。'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
     errors.value.email = '正しいメールアドレスを入力してください。'
   }
 
   // お問い合わせ内容のチェック
   if (!formData.value.inquiryType) {
     errors.value.inquiryType = 'お問い合わせ内容を選択してください。'
+  }
+  // 日付型のチェック
+  if (formData.value.replyDate && !isValidDateFormat(formData.value.replyDate)) {
+    errors.value.replyDate = '日付が正しくありません。'
   }
 
   // 詳細のチェック
@@ -94,9 +103,38 @@ function handleSubmit() {
     alert('入力内容を確認してください。') // バリデーション失敗時
   }
 }
-function confirmSubmit() {
-  // ここで実際の送信処理を行う（例: API呼び出し）
-  formStage.value = 'submitted' // 送信完了画面に遷移
+async function confirmSubmit() {
+  loadingStore.showLoading()
+  const data = new FormData()
+  data.append('nameLast', formData.value.nameLast)
+  data.append('nameFirst', formData.value.nameFirst)
+  data.append('email', formData.value.email)
+  data.append('inquiryType', formData.value.inquiryType)
+  data.append('replyDate', formData.value.replyDate)
+  data.append('details', formData.value.details)
+  data.append('agree', formData.value.agree.toString())
+
+  imageFiles.value.forEach((file, index) => {
+    data.append(`image${index + 1}`, file)
+  })
+  try {
+    const response = await axios
+      .post('https://httpbin.org/post', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((response) => {
+        loadingStore.hideLoading()
+        console.log('データ送信に成功しました:', response.data)
+        formStage.value = 'submitted' // 送信完了画面に遷移
+      })
+      .catch((error) => {
+        console.error('データ送信に失敗しました:', error)
+      })
+  } catch (error) {
+    console.error('フォームの送信中にエラーが発生しました:', error)
+  }
 }
 function editForm() {
   formStage.value = 'input' // 入力画面に戻る
@@ -107,13 +145,11 @@ const options = {
   month: 'long',
   day: 'numeric',
 }
+loadingStore.showLoading()
 
 onMounted(async () => {
-  loadingStore.showLoading()
-  await fetchData()
   loadingStore.hideLoading()
 })
-async function fetchData() {}
 </script>
 
 <template>
@@ -195,6 +231,7 @@ async function fetchData() {}
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           :min="today"
         />
+        <p v-if="errors.replyDate" class="text-red-500 text-sm mt-1">{{ errors.replyDate }}</p>
       </div>
       <div class="mb-4">
         <label for="inquiry" class="block text-sm font-medium text-gray-700"
@@ -223,6 +260,7 @@ async function fetchData() {}
         </label>
         <input
           type="file"
+          accept="image/png, image/jpeg, image/gif"
           id="file-upload"
           @change="handleFiles"
           name="file-upload"
@@ -259,7 +297,7 @@ async function fetchData() {}
     <div class="container mx-auto mb-4">
       <button
         @click.prevent="handleSubmit"
-        class="bg-main-color rounded-full text-white px-4 py-2 rounded transition-colors hover:bg-sky-300"
+        class="bg-main-color rounded-full text-white px-4 py-2 transition-colors hover:bg-sky-300"
       >
         送信する
       </button>
@@ -270,28 +308,30 @@ async function fetchData() {}
       <h2 class="text-lg font-semibold mb-1">確認画面</h2>
       <p class="mb-4">以下の内容で送信します。</p>
 
-      <p><strong>お名前（姓）:</strong> {{ formData.nameLast }}</p>
-      <p><strong>お名前（名）:</strong> {{ formData.nameFirst }}</p>
-      <p><strong>メールアドレス:</strong> {{ formData.email }}</p>
-      <p>
+      <p class="mb-1"><strong>お名前（姓）:</strong> {{ formData.nameLast }}</p>
+      <p class="mb-1"><strong>お名前（名）:</strong> {{ formData.nameFirst }}</p>
+      <p class="mb-1"><strong>メールアドレス:</strong> {{ formData.email }}</p>
+      <p class="mb-1">
         <strong>お問い合わせ内容:</strong>
         {{ formData.inquiryType == 'product' ? '製品について' : 'その他' }}
       </p>
-      <p>
+      <p class="mb-1">
         <strong>希望返信日:</strong>
         {{
-          new Date(formData.replyDate).toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })
+          formData.replyDate == ''
+            ? 'なし'
+            : new Date(formData.replyDate).toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
         }}
       </p>
-      <p>
+      <p class="mb-1">
         <strong>詳細:</strong> {{ formData.details
         }}<span v-if="formData.details.length <= 0">なし</span>
       </p>
-      <p><strong>画像:</strong><span v-if="imageUrls.length <= 0">なし</span></p>
+      <p class="mb-1"><strong>画像:</strong><span v-if="imageUrls.length <= 0">なし</span></p>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
         <div v-for="(url, index) in imageUrls" :key="index" class="relative group border p-2">
           <img :src="url" alt="Uploaded Image" class="w-full object-contain h-32 rounded-md" />
@@ -299,7 +339,7 @@ async function fetchData() {}
       </div>
     </div>
     <!-- ボタン群 -->
-    <div class="mt-4">
+    <div class="container mx-auto rounded-md">
       <button
         @click="editForm"
         class="bg-gray-500 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
@@ -308,7 +348,7 @@ async function fetchData() {}
       </button>
       <button
         @click="confirmSubmit"
-        class="bg-green-500 text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 ml-2"
+        class="bg-main-color text-white px-4 py-2 rounded-full text-sm cursor-pointer hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 ml-2"
       >
         確定して送信
       </button>
@@ -321,7 +361,7 @@ async function fetchData() {}
       <p class="">
         送信完了しました。<br />
         ありがとうございます。<br />
-        〇営業日以内にメールアドレス宛に返信いたします。
+        10営業日以内にメールアドレス宛に返信いたします。
       </p>
     </div>
   </div>

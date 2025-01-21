@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="loadingStore.isLoading"
-    class="fixed inset-0 bg-gray-200 bg-opacity-75 flex justify-center items-center"
+    class="fixed inset-0 bg-gray-200 bg-opacity-75 flex justify-center items-center z-40"
   >
     <div class="spinner"></div>
   </div>

@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .label-required {
+    @apply bg-red-500 text-white px-1 py-0 rounded;
+    &::before {
+      content: '必須';
+      font-size: 0.75rem;
+    }
+  }
+
+  .label-optional {
+    @apply bg-gray-300 text-gray-800 px-1 py-0 rounded;
+    &::before {
+      content: '任意';
+      font-size: 0.75rem;
+    }
+  }
+}
+body {
+  min-width: 360px;
+  overflow-x: auto;
+}
